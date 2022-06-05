@@ -6,3 +6,81 @@ datasource db {
 generator client {
     provider = "prisma-client-js"
 }
+
+enum EventTheme {
+    EDUCATION
+    HEALTHCARE
+    LIFESTYLE
+    LIVELIHOOD
+}
+
+enum UserType {
+    ADMIN
+    BENEFICIARY
+}
+
+enum RequestType {
+    FINANCIAL
+    NON_FINANCIAL
+}
+
+enum RequestStatus {
+    UNDER_REVIEW
+    APPROVED
+    PENDING_UPLOADS
+    COMPLETE
+    REJECTED
+}
+
+model event {
+    id          Int        @id @default(autoincrement())
+    name        String
+    agenda      String
+    description String
+    posterUrl   String
+    startDate   String
+    endDate     String
+    theme       EventTheme
+    location    String
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @default(now())
+}
+
+model user {
+    id              Int        @id @default(autoincrement())
+    uid             String     @unique
+    password        String
+    type            UserType
+    yearOfEnrolment String
+    name            String
+    phoneNumber     String     @unique
+    photoUrl        String     @default("")
+    request         request[]
+    document        document[]
+    createdAt       DateTime   @default(now())
+    updatedAt       DateTime   @default(now())
+}
+
+model request {
+    id          Int           @id @default(autoincrement())
+    type        RequestType
+    description String
+    status      RequestStatus
+    userId      Int
+    user        user          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    donation    String
+    document    document?
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @default(now())
+}
+
+model document {
+    id        Int      @id @default(autoincrement())
+    requestId Int      @unique
+    request   request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+    userId    Int
+    user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    data      Json
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+}
