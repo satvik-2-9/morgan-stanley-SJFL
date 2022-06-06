@@ -7,16 +7,14 @@ generator client {
     provider = "prisma-client-js"
 }
 
-enum EventTheme {
+enum Theme {
     EDUCATION
     HEALTHCARE
     LIFESTYLE
     LIVELIHOOD
-}
-
-enum UserType {
-    ADMIN
-    BENEFICIARY
+    CAREER_COUNSELLING
+    GENERAL_COUNSELLING
+    WELLNESS_COUNSELLING
 }
 
 enum RequestType {
@@ -26,49 +24,65 @@ enum RequestType {
 
 enum RequestStatus {
     UNDER_REVIEW
-    APPROVED
     PENDING_UPLOADS
     COMPLETE
     REJECTED
 }
 
 model event {
-    id          Int        @id @default(autoincrement())
+    id          Int      @id @default(autoincrement())
     name        String
     agenda      String
     description String
     posterUrl   String
-    startDate   String
-    endDate     String
-    theme       EventTheme
+    startDate   DateTime
+    endDate     DateTime
+    theme       Theme
     location    String
-    createdAt   DateTime   @default(now())
-    updatedAt   DateTime   @default(now())
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @default(now())
 }
 
 model user {
-    id              Int        @id @default(autoincrement())
-    uid             String     @unique
-    password        String
-    type            UserType
-    yearOfEnrolment String
-    name            String
-    phoneNumber     String     @unique
-    photoUrl        String     @default("")
-    request         request[]
-    document        document[]
-    createdAt       DateTime   @default(now())
-    updatedAt       DateTime   @default(now())
+    id               Int        @id @default(autoincrement())
+    uid              String     @unique
+    email            String     @unique
+    password         String
+    address          Json
+    yearOfEnrolment  String
+    name             String
+    phoneNumber      String     @unique
+    photoUrl         String     @default("")
+    donationReceived Float
+    request          request[]
+    document         document[]
+    createdAt        DateTime   @default(now())
+    updatedAt        DateTime   @default(now())
+}
+
+model admin {
+    id        Int       @id @default(autoincrement())
+    uid       String    @unique
+    email     String    @unique
+    password  String
+    name      String
+    photoUrl  String    @default("")
+    request   request[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @default(now())
 }
 
 model request {
     id          Int           @id @default(autoincrement())
     type        RequestType
+    theme       Theme
     description String
-    status      RequestStatus
+    status      RequestStatus @default(UNDER_REVIEW)
     userId      Int
     user        user          @relation(fields: [userId], references: [id], onDelete: Cascade)
-    donation    String
+    adminId     Int
+    admin       admin         @relation(fields: [adminId], references: [id])
+    donation    Float
     document    document?
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @default(now())
