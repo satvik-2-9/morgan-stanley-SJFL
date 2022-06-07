@@ -92,7 +92,7 @@ export const handleDeleteAdmin = async (
   const request = await prisma.admin.findUnique({
     where: { id: adminId },
   });
-  if (!request) return res.status(404).json({ data: "User Not Found" });
+  if (!request) return res.status(404).json({ data: "Admin Not Found" });
 
   await prisma.admin.delete({
     where: {
@@ -100,7 +100,7 @@ export const handleDeleteAdmin = async (
     },
   });
 
-  return res.status(200).json({ data: "User Successfully Deleted!" });
+  return res.status(200).json({ data: "Admin Successfully Deleted!" });
 };
 
 export const handleGetAllAdmins = async (req: Request, res: Response) => {
@@ -122,11 +122,11 @@ export const handleGetAdminById = async (
   const adminId = Number(req.params.id);
   if (isNaN(adminId)) return res.status(400).json({ data: "Invalid Id" });
 
-  const request = await prisma.admin.findUnique({
+  const admin = await prisma.admin.findUnique({
     where: { id: adminId },
   });
-  if (!request) return res.status(404).json({ data: "Request not found" });
-  return res.json({ data: request });
+  if (!admin) return res.status(404).json({ data: "Admin not found" });
+  return res.json({ data: admin });
 };
 
 export const handleUpdateAdminById = async (
@@ -135,9 +135,7 @@ export const handleUpdateAdminById = async (
 ) => {
   const adminId = Number(req.params.id);
   const allowedUpdateFields: Array<keyof Prisma.adminUpdateInput> = [
-    "uid",
     "email",
-    "password",
     "name",
     "photoUrl",
   ];
@@ -150,23 +148,14 @@ export const handleUpdateAdminById = async (
     if (!allowedUpdateFields.includes(update as keyof Prisma.adminUpdateInput))
       return res.status(400).json({ data: "Invalid Arguments" });
 
-    /*     if (["user", "admin"].includes(update)) {
-      const entityConnection = {
-        connect: { id: req.body[update] },
-      };
-      const elem = await prisma[update].findUnique({
-        where: { id: req.body[update] },
-      });
-      if (!elem) return res.status(400).json({ data: `${update} not found` });
-      updateObject[update] = entityConnection;
-    } else updateObject[update] = req.body[update]; */
+    updateObject[update] = req.body[update];
   }
 
   const adminToBeUpdated = await prisma.admin.findUnique({
     where: { id: adminId },
   });
   if (!adminToBeUpdated)
-    return res.status(404).json({ data: "Request Not Found" });
+    return res.status(404).json({ data: "Admin Not Found" });
 
   updateObject.updatedAt = new Date();
   const request = await prisma.admin.update({

@@ -24,30 +24,29 @@ export const handleCreateUser = async (req: Request, res: Response) => {
     } = req.body;
 
     //10 salting rounds.
-    bcrypt.hash(req.body.password, 10, (err, hash) => {
-      if (err) {
-        return res.status(500).json({
-          error: err,
-        });
-      } else {
-        // maybe put uid genetation automated here.
-        const newUserObject = {
-          uid,
-          email,
-          password: hash,
-          address,
-          yearOfEnrolment,
-          name,
-          phoneNumber,
-          photoUrl,
-          donationReceived,
-        };
+    const hashPassword = await bcrypt.hash(req.body.password, 10);
 
-        const request = prisma.user.create({
-          data: newUserObject,
-        });
+    const newUserObject = {
+      uid,
+      email,
+      password: hashPassword,
+      address,
+      yearOfEnrolment,
+      name,
+      phoneNumber,
+      photoUrl,
+      donationReceived,
+    };
 
-        /*           const transporter = nodemailer.createTransport({
+    const user = await prisma.user.create({
+      data: newUserObject,
+    });
+
+    user.password = "";
+
+    return res.json({ data: user });
+
+    /*           const transporter = nodemailer.createTransport({
             host: "smtp.gmail.com",
             port: 587,
             secure: false,
@@ -72,12 +71,8 @@ export const handleCreateUser = async (req: Request, res: Response) => {
             }
           );
  */
-
-        return res.json({ data: request });
-      }
-    });
-    return res.status(500).json({ data: error });
   }
+  return res.status(500).json({ data: error.details[0].message });
 };
 
 /*   const userToBeConnected = await prisma.user.findUnique({
@@ -138,7 +133,7 @@ export const handleGetUserById = async (
   const request = await prisma.user.findUnique({
     where: { id: userId },
   });
-  if (!request) return res.status(404).json({ data: "Request not found" });
+  if (!request) return res.status(404).json({ data: "User not found" });
   return res.json({ data: request });
 };
 
@@ -148,9 +143,7 @@ export const handleUpdateUserById = async (
 ) => {
   const userId = Number(req.params.id);
   const allowedUpdateFields: Array<keyof Prisma.userUpdateInput> = [
-    "uid",
     "email",
-    "password",
     "address",
     "yearOfEnrolment",
     "name",
@@ -167,16 +160,7 @@ export const handleUpdateUserById = async (
     if (!allowedUpdateFields.includes(update as keyof Prisma.userUpdateInput))
       return res.status(400).json({ data: "Invalid Arguments" });
 
-    /*     if (["user", "admin"].includes(update)) {
-      const entityConnection = {
-        connect: { id: req.body[update] },
-      };
-      const elem = await prisma[update].findUnique({
-        where: { id: req.body[update] },
-      });
-      if (!elem) return res.status(400).json({ data: `${update} not found` });
-      updateObject[update] = entityConnection;
-    } else updateObject[update] = req.body[update]; */
+    updateObject[update] = req.body[update];
   }
 
   const userToBeUpdated = await prisma.user.findUnique({
@@ -184,6 +168,20 @@ export const handleUpdateUserById = async (
   });
   if (!userToBeUpdated)
     return res.status(404).json({ data: "Request Not Found" });
+
+  const emailToBeUpdated = await prisma.user.findUnique({
+    where: { email: req.body.email },
+  });
+  if (emailToBeUpdated)
+    return res.status(400).json({ data: "A user with this email exists" });
+
+  const phoneNumberToBeUpdated = await prisma.user.findUnique({
+    where: { phoneNumber: req.body.phoneNumber },
+  });
+  if (phoneNumberToBeUpdated)
+    return res
+      .status(400)
+      .json({ data: "A user with this phone number exists" });
 
   updateObject.updatedAt = new Date();
   const request = await prisma.user.update({
