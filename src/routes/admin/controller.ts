@@ -9,19 +9,10 @@ import * as bcrypt from "bcrypt";
 
 /* gotta add jwt authentication everywhere to validate request */
 
-export const handleCreateUser = async (req: Request, res: Response) => {
+export const handleCreateAdmin = async (req: Request, res: Response) => {
   const { error } = schema.validate(req.body);
   if (!error) {
-    const {
-      uid,
-      email,
-      address,
-      yearOfEnrolment,
-      name,
-      phoneNumber,
-      photoUrl,
-      donationReceived,
-    } = req.body;
+    const { uid, email, name, photoUrl } = req.body;
 
     //10 salting rounds.
     bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -35,15 +26,11 @@ export const handleCreateUser = async (req: Request, res: Response) => {
           uid,
           email,
           password: hash,
-          address,
-          yearOfEnrolment,
           name,
-          phoneNumber,
           photoUrl,
-          donationReceived,
         };
 
-        const request = prisma.user.create({
+        const request = prisma.admin.create({
           data: newUserObject,
         });
 
@@ -95,76 +82,72 @@ export const handleCreateUser = async (req: Request, res: Response) => {
 
 /* email trigger to confirm user creation, email to user email by admin. */
 
-export const handleDeleteUser = async (
+export const handleDeleteAdmin = async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
-  const userId = Number(req.params.id);
-  if (!userId) return res.status(400).json({ data: "Invalid ID" });
+  const adminId = Number(req.params.id);
+  if (!adminId) return res.status(400).json({ data: "Invalid ID" });
 
-  const request = await prisma.user.findUnique({
-    where: { id: userId },
+  const request = await prisma.admin.findUnique({
+    where: { id: adminId },
   });
   if (!request) return res.status(404).json({ data: "User Not Found" });
 
-  await prisma.user.delete({
+  await prisma.admin.delete({
     where: {
-      id: userId,
+      id: adminId,
     },
   });
 
   return res.status(200).json({ data: "User Successfully Deleted!" });
 };
 
-export const handleGetAllUsers = async (req: Request, res: Response) => {
+export const handleGetAllAdmins = async (req: Request, res: Response) => {
   const skip = Number(req.query.skip) || 0;
   const take = Number(req.query.take) || 10;
 
-  const user = await prisma.user.findMany({
+  const admin = await prisma.admin.findMany({
     skip: skip,
     take: take,
   });
 
-  return res.json({ data: user });
+  return res.json({ data: admin });
 };
 
-export const handleGetUserById = async (
+export const handleGetAdminById = async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
-  const userId = Number(req.params.id);
-  if (isNaN(userId)) return res.status(400).json({ data: "Invalid Id" });
+  const adminId = Number(req.params.id);
+  if (isNaN(adminId)) return res.status(400).json({ data: "Invalid Id" });
 
-  const request = await prisma.user.findUnique({
-    where: { id: userId },
+  const request = await prisma.admin.findUnique({
+    where: { id: adminId },
   });
   if (!request) return res.status(404).json({ data: "Request not found" });
   return res.json({ data: request });
 };
 
-export const handleUpdateUserById = async (
+export const handleUpdateAdminById = async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
-  const userId = Number(req.params.id);
-  const allowedUpdateFields: Array<keyof Prisma.userUpdateInput> = [
+  const adminId = Number(req.params.id);
+  const allowedUpdateFields: Array<keyof Prisma.adminUpdateInput> = [
     "uid",
     "email",
     "password",
-    "address",
-    "yearOfEnrolment",
     "name",
-    "phoneNumber",
     "photoUrl",
-    "donationReceived",
   ];
 
   const updates = Object.keys(req.body);
 
-  const updateObject: Prisma.userUpdateInput = {};
+  const updateObject: Prisma.adminUpdateInput = {};
 
   for (const update of updates) {
-    if (!allowedUpdateFields.includes(update as keyof Prisma.userUpdateInput))
+    if (!allowedUpdateFields.includes(update as keyof Prisma.adminUpdateInput))
       return res.status(400).json({ data: "Invalid Arguments" });
 
     /*     if (["user", "admin"].includes(update)) {
@@ -179,16 +162,16 @@ export const handleUpdateUserById = async (
     } else updateObject[update] = req.body[update]; */
   }
 
-  const userToBeUpdated = await prisma.user.findUnique({
-    where: { id: userId },
+  const adminToBeUpdated = await prisma.admin.findUnique({
+    where: { id: adminId },
   });
-  if (!userToBeUpdated)
+  if (!adminToBeUpdated)
     return res.status(404).json({ data: "Request Not Found" });
 
   updateObject.updatedAt = new Date();
-  const request = await prisma.user.update({
+  const request = await prisma.admin.update({
     where: {
-      id: userId,
+      id: adminId,
     },
     data: updateObject,
   });
