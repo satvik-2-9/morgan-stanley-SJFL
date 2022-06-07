@@ -23,7 +23,7 @@ const uploadFile = multer({
 });
 
 router.post(
-  "/upload-file",
+  "/",
   uploadFile.single("file"),
   ce((req: Request, res: Response) => {
     // console.log(req.file)
