@@ -2,7 +2,7 @@ import { Request, Response, Router } from "express";
 import requestRouter from "./request";
 import eventRouter from "./event";
 import uploadRouter from "./upload";
-import documentRouter from "./document"
+import documentRouter from "./document";
 
 const router = Router();
 
