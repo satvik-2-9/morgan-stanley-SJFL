@@ -5,142 +5,169 @@ import { schema } from "./schema";
 import * as nodemailer from "nodemailer";
 import { constants } from "~/constants";
 import process from "process";
+import * as bcrypt from "bcrypt";
 
-export const handleCreateRequest = async (req: Request, res: Response) => {
+/* gotta add jwt authentication everywhere to validate request */
+
+export const handleCreateUser = async (req: Request, res: Response) => {
   const { error } = schema.validate(req.body);
   if (!error) {
-    const { type, theme, description, user, admin, donation } = req.body;
-    console.log(donation);
-    console.log(type + " " + theme);
-    const userToBeConnected = await prisma.user.findUnique({
+    const {
+      uid,
+      email,
+      address,
+      yearOfEnrolment,
+      name,
+      phoneNumber,
+      photoUrl,
+      donationReceived,
+    } = req.body;
+
+    //10 salting rounds.
+    bcrypt.hash(req.body.password, 10, (err, hash) => {
+      if (err) {
+        return res.status(500).json({
+          error: err,
+        });
+      } else {
+        // maybe put uid genetation automated here.
+        const newUserObject = {
+          uid,
+          email,
+          password: hash,
+          address,
+          yearOfEnrolment,
+          name,
+          phoneNumber,
+          photoUrl,
+          donationReceived,
+        };
+
+        const request = prisma.user.create({
+          data: newUserObject,
+        });
+
+        /*           const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false,
+            auth: {
+              user: process.env.NODEMAILER_EMAIL,
+              pass: process.env.NODEMAILER_PASSWORD,
+            },
+          });
+
+          const mailOptions = {
+            from: constants.officialEmail,
+            to: constants.adminEmail,
+            subject: "New Request Raised",
+            text: `Hi ${constants.adminName},\nA new request has been raised.\n Please login and assign the request to somebody.\n`,
+          };
+          transporter.sendMail(mailOptions).then(
+            (r) => {
+              console.log("email sent");
+            },
+            (err) => {
+              console.log(err);
+            }
+          );
+ */
+
+        return res.json({ data: request });
+      }
+    });
+    return res.status(500).json({ data: error });
+  }
+};
+
+/*   const userToBeConnected = await prisma.user.findUnique({
       where: { id: user },
     });
     if (!userToBeConnected)
       return res.status(400).json({ data: "User not found" });
-
-    const adminToBeConnected = await prisma.admin.findUnique({
+ */
+/*     const adminToBeConnected = await prisma.admin.findUnique({
       where: { id: admin },
     });
     if (!adminToBeConnected)
       return res.status(400).json({ data: "Admin not found" });
+ */
 
-    const newRequestObject = {
-      type,
-      theme,
-      description,
-      donation,
-      user: { connect: { id: user } },
-      admin: { connect: { id: admin } },
-    };
+/* email trigger to confirm user creation, email to user email by admin. */
 
-    const request = await prisma.request.create({
-      data: newRequestObject,
-    });
-
-    // logic to get the adminId,adminEmail that this particular request is being assigned to.
-    console.log(process.env.NODEMAILER_EMAIL);
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.NODEMAILER_EMAIL,
-        pass: process.env.NODEMAILER_PASSWORD,
-      },
-    });
-
-    const mailOptions = {
-      from: constants.officialEmail,
-      to: constants.adminEmail,
-      subject: "New Request Raised",
-      text: `Hi ${constants.adminName},\nA new request has been raised.\n Please login and assign the request to somebody.\n`,
-    };
-    transporter.sendMail(mailOptions).then(
-      (r) => {
-        console.log("email sent");
-      },
-      (err) => {
-        console.log(err);
-      }
-    );
-    return res.json({ data: request });
-  }
-  return res.status(500).json({ data: error.details[0].message });
-};
-
-export const handleDeleteRequest = async (
+export const handleDeleteUser = async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
-  const requestId = Number(req.params.id);
-  if (!requestId) return res.status(400).json({ data: "Invalid ID" });
+  const userId = Number(req.params.id);
+  if (!userId) return res.status(400).json({ data: "Invalid ID" });
 
-  const request = await prisma.request.findUnique({
-    where: { id: requestId },
+  const request = await prisma.user.findUnique({
+    where: { id: userId },
   });
-  if (!request) return res.status(404).json({ data: "Request Not Found" });
+  if (!request) return res.status(404).json({ data: "User Not Found" });
 
-  await prisma.request.delete({
+  await prisma.user.delete({
     where: {
-      id: requestId,
+      id: userId,
     },
   });
 
-  return res.status(200).json({ data: "Successfully Deleted!" });
+  return res.status(200).json({ data: "User Successfully Deleted!" });
 };
 
-export const handleGetAllRequests = async (req: Request, res: Response) => {
+export const handleGetAllUsers = async (req: Request, res: Response) => {
   const skip = Number(req.query.skip) || 0;
   const take = Number(req.query.take) || 10;
 
-  const requests = await prisma.request.findMany({
+  const user = await prisma.user.findMany({
     skip: skip,
     take: take,
   });
 
-  return res.json({ data: requests });
+  return res.json({ data: user });
 };
 
-export const handleGetRequestById = async (
+export const handleGetUserById = async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
-  const requestId = Number(req.params.id);
-  if (isNaN(requestId)) return res.status(400).json({ data: "Invalid Id" });
+  const userId = Number(req.params.id);
+  if (isNaN(userId)) return res.status(400).json({ data: "Invalid Id" });
 
-  const request = await prisma.request.findUnique({
-    where: { id: requestId },
+  const request = await prisma.user.findUnique({
+    where: { id: userId },
   });
   if (!request) return res.status(404).json({ data: "Request not found" });
   return res.json({ data: request });
 };
 
-export const handleUpdateRequestById = async (
+export const handleUpdateUserById = async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
-  const productId = Number(req.params.id);
-  const allowedUpdateFields: Array<keyof Prisma.requestUpdateInput> = [
-    "type",
-    "theme",
-    "description",
-    "status",
-    "user",
-    "admin",
-    "donation",
+  const userId = Number(req.params.id);
+  const allowedUpdateFields: Array<keyof Prisma.userUpdateInput> = [
+    "uid",
+    "email",
+    "password",
+    "address",
+    "yearOfEnrolment",
+    "name",
+    "phoneNumber",
+    "photoUrl",
+    "donationReceived",
   ];
 
   const updates = Object.keys(req.body);
 
-  const updateObject: Prisma.requestUpdateInput = {};
+  const updateObject: Prisma.userUpdateInput = {};
 
   for (const update of updates) {
-    if (
-      !allowedUpdateFields.includes(update as keyof Prisma.requestUpdateInput)
-    )
+    if (!allowedUpdateFields.includes(update as keyof Prisma.userUpdateInput))
       return res.status(400).json({ data: "Invalid Arguments" });
 
-    if (["user", "admin"].includes(update)) {
+    /*     if (["user", "admin"].includes(update)) {
       const entityConnection = {
         connect: { id: req.body[update] },
       };
@@ -149,19 +176,19 @@ export const handleUpdateRequestById = async (
       });
       if (!elem) return res.status(400).json({ data: `${update} not found` });
       updateObject[update] = entityConnection;
-    } else updateObject[update] = req.body[update];
+    } else updateObject[update] = req.body[update]; */
   }
 
   const requestToBeUpdated = await prisma.request.findUnique({
-    where: { id: productId },
+    where: { id: userId },
   });
   if (!requestToBeUpdated)
     return res.status(404).json({ data: "Request Not Found" });
 
   updateObject.updatedAt = new Date();
-  const request = await prisma.request.update({
+  const request = await prisma.user.update({
     where: {
-      id: productId,
+      id: userId,
     },
     data: updateObject,
   });
