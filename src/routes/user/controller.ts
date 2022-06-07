@@ -39,7 +39,6 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
 
     // logic to get the adminId,adminEmail that this particular request is being assigned to.
     console.log(process.env.NODEMAILER_EMAIL);
-    console.log(process.env.NODEMAILER_PASSWORD);
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,

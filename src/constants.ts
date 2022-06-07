@@ -1,6 +1,6 @@
 export const constants = {
-  officialEmail: "satvikbatra@gmail.com",
+  officialEmail: "satvikdtu@gmail.com",
   host: "smtp.gmail.com",
-  adminEmail: "satvikdtu@gmail.com",
+  adminEmail: "satvikbatra@gmail.com",
   adminName: "Satvik Batra",
 };
