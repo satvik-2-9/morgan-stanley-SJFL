@@ -6,6 +6,7 @@ import {
   handleGetAllRequests,
   handleGetRequestById,
   handleUpdateRequestById,
+  fetchDocumentByRequestID,
 } from "./controller";
 
 export const router = Router();
@@ -16,5 +17,8 @@ router.get("/:id", ce(handleGetRequestById));
 router.post("/", ce(handleCreateRequest));
 router.patch("/:id", ce(handleUpdateRequestById));
 router.delete("/:id", ce(handleDeleteRequest));
+
+// Special APIs
+router.get("/:id/document", ce(fetchDocumentByRequestID));
 
 export default router;
