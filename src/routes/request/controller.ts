@@ -2,12 +2,16 @@ import { Prisma } from ".prisma/client";
 import { Request, Response } from "express";
 import prisma from "~/lib/prisma";
 import { schema } from "./schema";
+import * as nodemailer from "nodemailer";
+import { constants } from "~/constants";
+import process from "process";
 
 export const handleCreateRequest = async (req: Request, res: Response) => {
   const { error } = schema.validate(req.body);
   if (!error) {
     const { type, theme, description, user, admin, donation } = req.body;
-
+    console.log(donation);
+    console.log(type + " " + theme);
     const userToBeConnected = await prisma.user.findUnique({
       where: { id: user },
     });
@@ -32,6 +36,34 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
     const request = await prisma.request.create({
       data: newRequestObject,
     });
+
+    // logic to get the adminId,adminEmail that this particular request is being assigned to.
+    console.log(process.env.NODEMAILER_EMAIL);
+    console.log(process.env.NODEMAILER_PASSWORD);
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: constants.officialEmail,
+      to: constants.adminEmail,
+      subject: "New Request Raised",
+      text: `Hi ${constants.adminName},\nA new request has been raised.\n Please login and assign the request to somebody.\n`,
+    };
+    transporter.sendMail(mailOptions).then(
+      (r) => {
+        console.log("email sent");
+      },
+      (err) => {
+        console.log(err);
+      }
+    );
     return res.json({ data: request });
   }
   return res.status(500).json({ data: error.details[0].message });
