@@ -4,7 +4,7 @@ import userRouter from "./user";
 import adminRouter from "./admin";
 import eventRouter from "./event";
 import uploadRouter from "./upload";
-import documentRouter from "./document";
+import documentRouter from "./document"
 
 const router = Router();
 
