@@ -9,7 +9,7 @@ import process from "process";
 export const handleCreateRequest = async (req: Request, res: Response) => {
   const { error } = schema.validate(req.body);
   if (!error) {
-    const { type, theme, description, user, admin, donation } = req.body;
+    const { type, theme, description, user, donation } = req.body;
     console.log(donation);
     console.log(type + " " + theme);
     const userToBeConnected = await prisma.user.findUnique({
@@ -18,11 +18,28 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
     if (!userToBeConnected)
       return res.status(400).json({ data: "User not found" });
 
-    const adminToBeConnected = await prisma.admin.findUnique({
-      where: { id: admin },
+    const admins = await prisma.admin.findMany({
+      include: {
+        _count: {
+          select: {
+            request: true,
+          },
+        },
+      },
     });
-    if (!adminToBeConnected)
-      return res.status(400).json({ data: "Admin not found" });
+    let minimumRequestsHandledByAnyAdmin = Number.MAX_SAFE_INTEGER;
+    let adminIdWithMinimumRequests;
+    for (const admin of admins) {
+      if (admin._count.request < minimumRequestsHandledByAnyAdmin) {
+        minimumRequestsHandledByAnyAdmin = admin._count.request;
+        adminIdWithMinimumRequests = admin.id;
+      }
+    }
+
+    if (!adminIdWithMinimumRequests)
+      return res
+        .status(404)
+        .json({ data: "No admin found to take up this request" });
 
     const newRequestObject = {
       type,
@@ -30,7 +47,7 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       description,
       donation,
       user: { connect: { id: user } },
-      admin: { connect: { id: admin } },
+      admin: { connect: { id: adminIdWithMinimumRequests } },
     };
 
     const request = await prisma.request.create({
@@ -50,11 +67,14 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       },
     });
 
+    const adminAssigned = await prisma.admin.findUnique({
+      where: { id: adminIdWithMinimumRequests },
+    });
     const mailOptions = {
       from: constants.officialEmail,
-      to: constants.adminEmail,
+      to: adminAssigned?.email,
       subject: "New Request Raised",
-      text: `Hi ${constants.adminName},\nA new request has been raised.\n Please login and assign the request to somebody.\n`,
+      text: `Hi ${adminAssigned?.name},\nA new request has been raised.\n Please login and review the request.\n`,
     };
     transporter.sendMail(mailOptions).then(
       () => {
