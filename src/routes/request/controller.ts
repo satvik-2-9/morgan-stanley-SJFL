@@ -1,4 +1,4 @@
-import { Prisma } from ".prisma/client";
+import { Prisma, RequestType, RequestStatus, Theme } from ".prisma/client";
 import { Request, Response } from "express";
 import prisma from "~/lib/prisma";
 import { schema } from "./schema";
@@ -9,7 +9,7 @@ import process from "process";
 export const handleCreateRequest = async (req: Request, res: Response) => {
   const { error } = schema.validate(req.body);
   if (!error) {
-    const { type, theme, description, user, admin, donation } = req.body;
+    const { type, theme, description, user, donation } = req.body;
     console.log(donation);
     console.log(type + " " + theme);
     const userToBeConnected = await prisma.user.findUnique({
@@ -18,11 +18,28 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
     if (!userToBeConnected)
       return res.status(400).json({ data: "User not found" });
 
-    const adminToBeConnected = await prisma.admin.findUnique({
-      where: { id: admin },
+    const admins = await prisma.admin.findMany({
+      include: {
+        _count: {
+          select: {
+            request: true,
+          },
+        },
+      },
     });
-    if (!adminToBeConnected)
-      return res.status(400).json({ data: "Admin not found" });
+    let minimumRequestsHandledByAnyAdmin = Number.MAX_SAFE_INTEGER;
+    let adminIdWithMinimumRequests;
+    for (const admin of admins) {
+      if (admin._count.request < minimumRequestsHandledByAnyAdmin) {
+        minimumRequestsHandledByAnyAdmin = admin._count.request;
+        adminIdWithMinimumRequests = admin.id;
+      }
+    }
+
+    if (!adminIdWithMinimumRequests)
+      return res
+        .status(404)
+        .json({ data: "No admin found to take up this request" });
 
     const newRequestObject = {
       type,
@@ -30,7 +47,7 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       description,
       donation,
       user: { connect: { id: user } },
-      admin: { connect: { id: admin } },
+      admin: { connect: { id: adminIdWithMinimumRequests } },
     };
 
     const request = await prisma.request.create({
@@ -50,14 +67,17 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       },
     });
 
+    const adminAssigned = await prisma.admin.findUnique({
+      where: { id: adminIdWithMinimumRequests },
+    });
     const mailOptions = {
       from: constants.officialEmail,
-      to: constants.adminEmail,
+      to: adminAssigned?.email,
       subject: "New Request Raised",
-      text: `Hi ${constants.adminName},\nA new request has been raised.\n Please login and assign the request to somebody.\n`,
+      text: `Hi ${adminAssigned?.name},\nA new request has been raised.\n Please login and review the request.\n`,
     };
     transporter.sendMail(mailOptions).then(
-      (r) => {
+      () => {
         console.log("email sent");
       },
       (err) => {
@@ -93,10 +113,40 @@ export const handleDeleteRequest = async (
 export const handleGetAllRequests = async (req: Request, res: Response) => {
   const skip = Number(req.query.skip) || 0;
   const take = Number(req.query.take) || 10;
+  const type: RequestType = req.query.type as RequestType;
+  const theme: Theme = req.query.theme as Theme;
+  const status: RequestStatus = req.query.status as RequestStatus;
+  const uid = req.query.uid;
+  const adminUid = req.query.adminUid;
 
   const requests = await prisma.request.findMany({
     skip: skip,
     take: take,
+    where: {
+      type: {
+        equals: type,
+      },
+      theme: {
+        equals: theme,
+      },
+      status: {
+        equals: status,
+      },
+      user: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        uid: {
+          equals: uid,
+        },
+      },
+      admin: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        uid: {
+          equals: adminUid,
+        },
+      },
+    },
   });
 
   return res.json({ data: requests });

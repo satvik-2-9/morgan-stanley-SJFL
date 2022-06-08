@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "request" ALTER COLUMN "status" SET DEFAULT E'APPROVAL_PENDING';
