@@ -15,70 +15,25 @@ export const handleCreateAdmin = async (req: Request, res: Response) => {
     const { uid, email, name, photoUrl } = req.body;
 
     //10 salting rounds.
-    bcrypt.hash(req.body.password, 10, (err, hash) => {
-      if (err) {
-        return res.status(500).json({
-          error: err,
-        });
-      } else {
-        // maybe put uid genetation automated here.
-        const newUserObject = {
-          uid,
-          email,
-          password: hash,
-          name,
-          photoUrl,
-        };
+    const hashPassword = await bcrypt.hash(req.body.password, 10);
+    const newUserObject = {
+      uid,
+      email,
+      password: hashPassword,
+      name,
+      photoUrl,
+    };
 
-        const request = prisma.admin.create({
-          data: newUserObject,
-        });
-
-        /*           const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false,
-            auth: {
-              user: process.env.NODEMAILER_EMAIL,
-              pass: process.env.NODEMAILER_PASSWORD,
-            },
-          });
-
-          const mailOptions = {
-            from: constants.officialEmail,
-            to: constants.adminEmail,
-            subject: "New Request Raised",
-            text: `Hi ${constants.adminName},\nA new request has been raised.\n Please login and assign the request to somebody.\n`,
-          };
-          transporter.sendMail(mailOptions).then(
-            (r) => {
-              console.log("email sent");
-            },
-            (err) => {
-              console.log(err);
-            }
-          );
- */
-
-        return res.json({ data: request });
-      }
+    const admin = await prisma.admin.create({
+      data: newUserObject,
     });
-    return res.status(500).json({ data: error });
+
+    admin.password = "";
+
+    return res.json({ data: admin });
   }
+  return res.status(500).json({ data: error });
 };
-
-/*   const userToBeConnected = await prisma.user.findUnique({
-      where: { id: user },
-    });
-    if (!userToBeConnected)
-      return res.status(400).json({ data: "User not found" });
- */
-/*     const adminToBeConnected = await prisma.admin.findUnique({
-      where: { id: admin },
-    });
-    if (!adminToBeConnected)
-      return res.status(400).json({ data: "Admin not found" });
- */
 
 /* email trigger to confirm user creation, email to user email by admin. */
 
@@ -89,10 +44,10 @@ export const handleDeleteAdmin = async (
   const adminId = Number(req.params.id);
   if (!adminId) return res.status(400).json({ data: "Invalid ID" });
 
-  const request = await prisma.admin.findUnique({
+  const admin = await prisma.admin.findUnique({
     where: { id: adminId },
   });
-  if (!request) return res.status(404).json({ data: "Admin Not Found" });
+  if (!admin) return res.status(404).json({ data: "Admin Not Found" });
 
   await prisma.admin.delete({
     where: {
