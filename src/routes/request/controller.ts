@@ -1,4 +1,4 @@
-import { Prisma } from ".prisma/client";
+import { Prisma, RequestType, RequestStatus, Theme } from ".prisma/client";
 import { Request, Response } from "express";
 import prisma from "~/lib/prisma";
 import { schema } from "./schema";
@@ -57,7 +57,7 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       text: `Hi ${constants.adminName},\nA new request has been raised.\n Please login and assign the request to somebody.\n`,
     };
     transporter.sendMail(mailOptions).then(
-      (r) => {
+      () => {
         console.log("email sent");
       },
       (err) => {
@@ -93,10 +93,40 @@ export const handleDeleteRequest = async (
 export const handleGetAllRequests = async (req: Request, res: Response) => {
   const skip = Number(req.query.skip) || 0;
   const take = Number(req.query.take) || 10;
+  const type: RequestType = req.query.type as RequestType;
+  const theme: Theme = req.query.theme as Theme;
+  const status: RequestStatus = req.query.status as RequestStatus;
+  const uid = req.query.uid;
+  const adminUid = req.query.adminUid;
 
   const requests = await prisma.request.findMany({
     skip: skip,
     take: take,
+    where: {
+      type: {
+        equals: type,
+      },
+      theme: {
+        equals: theme,
+      },
+      status: {
+        equals: status,
+      },
+      user: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        uid: {
+          equals: uid,
+        },
+      },
+      admin: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        uid: {
+          equals: adminUid,
+        },
+      },
+    },
   });
 
   return res.json({ data: requests });
