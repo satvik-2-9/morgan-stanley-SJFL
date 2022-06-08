@@ -6,7 +6,7 @@ import {
   handleGetAllUsers,
   handleGetUserById,
   handleUpdateUserById,
-  fetchDocumentsByUID
+  fetchDocumentsByUID,
 } from "./controller";
 
 export const router = Router();

@@ -194,37 +194,40 @@ export const handleUpdateUserById = async (
   return res.json({ data: request });
 };
 
-
 // Fetch all documents of User by UID
-export const fetchDocumentsByUID = async (req:Request<{ uid: string }>, res:Response) => {
+export const fetchDocumentsByUID = async (
+  req: Request<{ uid: string }>,
+  res: Response
+) => {
+  // Extract UID
+  const UID = req.params.uid;
 
-    // Extract UID
-    const UID = req.params.uid; 
+  // Check if request ID is valid or not valid
+  if (UID.length === 0) return res.status(400).json({ data: "Invalid UID" });
 
-    // Check if request ID is valid or not valid
-    if (UID.length === 0) return res.status(400).json({ data: "Invalid UID" });
+  // Get User by using UID
+  const user = await prisma.user.findUnique({
+    where: { uid: UID },
+  });
 
-    // Get User by using UID
-    const user = await prisma.user.findUnique({
-      where: { uid: UID },
-    });
+  if (!user) return res.status(404).json({ data: "User not found" });
+  const userID = user.id;
 
-    if (!user) return res.status(404).json({ data: "User not found" });
-    const userID = user.id;
+  // Check if user ID is valid or not valid
+  if (isNaN(userID)) return res.status(400).json({ data: "Invalid UID" });
 
-    // Check if user ID is valid or not valid
-    if (isNaN(userID)) return res.status(400).json({ data: "Invalid UID" });
+  // Fetch All user documents
+  const documents = await prisma.document.findMany({
+    where: { userId: userID },
+    select: { data: true },
+  });
 
-    // Fetch All user documents
-    const documents = await prisma.document.findMany({
-      where: { userId: userID },
-      select: {data : true},
-    });
+  // Return NOT FOUND message if document not found
+  if (!documents) return res.status(404).json({ data: "Documents not found" });
 
-     // Return NOT FOUND message if document not found
-     if (!documents) return res.status(404).json({ data: "Documents not found" });
-
-    // Return documents
-    return res.json({ data: documents });
-
+  const response = documents.map((document) => {
+    return document.data;
+  });
+  // Return documents
+  return res.json({ data: response });
 };

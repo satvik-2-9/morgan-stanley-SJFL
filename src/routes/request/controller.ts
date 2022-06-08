@@ -170,13 +170,16 @@ export const handleUpdateRequestById = async (
   return res.json({ data: request });
 };
 
-export const fetchDocumentByRequestID = async (req: Request<{ id: string }>, res: Response) => {
+export const fetchDocumentByRequestID = async (
+  req: Request<{ id: string }>,
+  res: Response
+) => {
   // Extract request ID
-  const requestId = Number(req.params.id); 
-  
+  const requestId = Number(req.params.id);
+
   // Check if request ID is valid or not valid
   if (isNaN(requestId)) return res.status(400).json({ data: "Invalid Id" });
-  
+
   // Extract document info using unique request ID
   const document = await prisma.document.findUnique({
     where: { requestId: requestId },
@@ -187,5 +190,4 @@ export const fetchDocumentByRequestID = async (req: Request<{ id: string }>, res
 
   // Return documents
   return res.json({ data: document.data });
-
 };
