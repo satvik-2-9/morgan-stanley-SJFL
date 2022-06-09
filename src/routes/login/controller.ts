@@ -11,13 +11,13 @@ export const handleUserLogin = async (req: Request, res: Response) => {
   const { error } = schema.validate(req.body);
   if (!error) {
     const uid = req.body.uid;
-    if (isNaN(uid)) return res.status(400).json({ data: "Invalid Id" });
+    if (uid.length === 0) return res.status(400).json({ data: "Invalid Id" });
 
     const request = await prisma.user.findUnique({
       where: { uid: uid },
     });
 
-    if (!request) return res.status(404).json({ data: "Request not found" });
+    if (!request) return res.status(404).json({ data: "User not found" });
 
     const match = await bcrypt.compare(req.body.password, request.password);
     if (match) {
@@ -38,11 +38,11 @@ export const handleAdminLogin = async (req: Request, res: Response) => {
   const { error } = schema.validate(req.body);
   if (!error) {
     const uid = req.body.uid;
-    if (isNaN(uid)) return res.status(400).json({ data: "Invalid Id" });
+    if (uid.length === 0) return res.status(400).json({ data: "Invalid Id" });
     const request = await prisma.admin.findUnique({
       where: { uid: uid },
     });
-    if (!request) return res.status(404).json({ data: "Request not found" });
+    if (!request) return res.status(404).json({ data: "Admin not found" });
 
     const match = await bcrypt.compare(req.body.password, request.password);
     if (match) {
