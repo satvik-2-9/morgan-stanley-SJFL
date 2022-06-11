@@ -255,5 +255,5 @@ export const fetchDocumentByRequestID = async (
   if (!document) return res.status(404).json({ data: "Documents not found" });
 
   // Return documents
-  return res.json({ data: document.data });
+  return res.json({ data: document });
 };
