@@ -147,6 +147,14 @@ export const handleGetAllRequests = async (req: Request, res: Response) => {
         },
       },
     },
+    include: {
+      user: {
+        select: {
+          uid: true,
+          name: true,
+        },
+      },
+    },
   });
 
   return res.json({ data: requests });
