@@ -169,6 +169,14 @@ export const handleGetRequestById = async (
 
   const request = await prisma.request.findUnique({
     where: { id: requestId },
+    include: {
+      user: {
+        select: {
+          uid: true,
+          name: true,
+        },
+      },
+    },
   });
   if (!request) return res.status(404).json({ data: "Request not found" });
   return res.json({ data: request });
