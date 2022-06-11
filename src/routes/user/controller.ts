@@ -169,19 +169,23 @@ export const handleUpdateUserById = async (
   if (!userToBeUpdated)
     return res.status(404).json({ data: "Request Not Found" });
 
-  const emailToBeUpdated = await prisma.user.findUnique({
-    where: { email: req.body.email },
-  });
-  if (emailToBeUpdated)
-    return res.status(400).json({ data: "A user with this email exists" });
+  if (req.body.email) {
+    const emailToBeUpdated = await prisma.user.findUnique({
+      where: { email: req.body.email },
+    });
+    if (emailToBeUpdated)
+      return res.status(400).json({ data: "A user with this email exists" });
+  }
 
-  const phoneNumberToBeUpdated = await prisma.user.findUnique({
-    where: { phoneNumber: req.body.phoneNumber },
-  });
-  if (phoneNumberToBeUpdated)
-    return res
-      .status(400)
-      .json({ data: "A user with this phone number exists" });
+  if (req.body.phoneNumber) {
+    const phoneNumberToBeUpdated = await prisma.user.findUnique({
+      where: { phoneNumber: req.body.phoneNumber },
+    });
+    if (phoneNumberToBeUpdated)
+      return res
+        .status(400)
+        .json({ data: "A user with this phone number exists" });
+  }
 
   updateObject.updatedAt = new Date();
   const request = await prisma.user.update({
