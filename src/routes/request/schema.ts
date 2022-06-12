@@ -10,4 +10,5 @@ export const schema = Joi.object().keys({
   user: Joi.number().integer().strict(),
   admin: Joi.number().integer().strict(),
   donation: Joi.number(),
+  fundsRequired: Joi.number(),
 });

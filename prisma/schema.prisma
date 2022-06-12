@@ -74,19 +74,20 @@ model admin {
 }
 
 model request {
-    id          Int           @id @default(autoincrement())
-    type        RequestType
-    theme       Theme
-    description String
-    status      RequestStatus @default(APPROVAL_PENDING)
-    userId      Int
-    user        user          @relation(fields: [userId], references: [id], onDelete: Cascade)
-    adminId     Int
-    admin       admin         @relation(fields: [adminId], references: [id])
-    donation    Float
-    document    document?
-    createdAt   DateTime      @default(now())
-    updatedAt   DateTime      @default(now())
+    id            Int           @id @default(autoincrement())
+    type          RequestType
+    theme         Theme
+    description   String
+    status        RequestStatus @default(APPROVAL_PENDING)
+    userId        Int
+    user          user          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    adminId       Int
+    admin         admin         @relation(fields: [adminId], references: [id])
+    donation      Float?
+    fundsRequired Float?
+    document      document?
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @default(now())
 }
 
 model document {

@@ -9,7 +9,8 @@ import process from "process";
 export const handleCreateRequest = async (req: Request, res: Response) => {
   const { error } = schema.validate(req.body);
   if (!error) {
-    const { type, theme, description, user, donation } = req.body;
+    const { type, theme, description, user, donation, fundsRequired } =
+      req.body;
     console.log(donation);
     console.log(type + " " + theme);
     const userToBeConnected = await prisma.user.findUnique({
@@ -46,6 +47,7 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       theme,
       description,
       donation,
+      fundsRequired,
       user: { connect: { id: user } },
       admin: { connect: { id: adminIdWithMinimumRequests } },
     };
@@ -200,6 +202,7 @@ export const handleUpdateRequestById = async (
     "user",
     "admin",
     "donation",
+    "fundsRequired",
   ];
 
   const updates = Object.keys(req.body);
