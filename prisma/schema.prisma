@@ -100,3 +100,14 @@ model document {
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now())
 }
+
+model doctemplate {
+    id        Int         @id @default(autoincrement())
+    type      RequestType
+    theme     Theme
+    data      Json
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @default(now())
+
+    @@unique([type, theme])
+}

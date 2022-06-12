@@ -6,6 +6,7 @@ import eventRouter from "./event";
 import uploadRouter from "./upload";
 import documentRouter from "./document";
 import loginRouter from "./login";
+import doctemplateRouter from "./doctemplate";
 const router = Router();
 
 router.use("/request", requestRouter);
@@ -15,6 +16,7 @@ router.use("/event", eventRouter);
 router.use("/document", documentRouter);
 router.use("/upload", uploadRouter);
 router.use("/login", loginRouter);
+router.use("/doctemplate", doctemplateRouter);
 router.get("/", (req: Request, res: Response) => {
   res.send("Hey there, this is the api route");
 });

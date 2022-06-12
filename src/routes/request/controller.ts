@@ -52,9 +52,34 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       admin: { connect: { id: adminIdWithMinimumRequests } },
     };
 
-    const request = await prisma.request.create({
+    const createdRequest = await prisma.request.create({
       data: newRequestObject,
     });
+
+    // Find a document template for the request
+    let templateData: any = {};
+    const documentTemplate = await prisma.doctemplate.findUnique({
+      where: {
+        type_theme: {
+          type,
+          theme,
+        },
+      },
+    });
+    if (documentTemplate) templateData = documentTemplate.data;
+    // Create a document object and link it to the request
+
+    // console.log(JSON.stringify(templateData));
+    const documentCreateObject = {
+      request: { connect: { id: createdRequest.id } },
+      user: { connect: { id: user } },
+      data: templateData,
+    };
+    const documentToBeConnected = await prisma.document.create({
+      data: documentCreateObject,
+    });
+
+    // console.log(documentToBeConnected.id);
 
     // logic to get the adminId,adminEmail that this particular request is being assigned to.
     console.log(process.env.NODEMAILER_EMAIL);
@@ -86,7 +111,7 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
         console.log(err);
       }
     );
-    return res.json({ data: request });
+    return res.json({ data: createdRequest });
   }
   return res.status(500).json({ data: error.details[0].message });
 };
