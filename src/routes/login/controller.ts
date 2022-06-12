@@ -102,6 +102,8 @@ export const getCurrentUser = async (req: Request, res: Response) => {
       throw new Error("Not authorized, token failed");
     }
   }
+
+  return res.status(400).json({ data: "Invalid token" });
 };
 
 export const getCurrentAdmin = async (req: Request, res: Response) => {
@@ -134,4 +136,6 @@ export const getCurrentAdmin = async (req: Request, res: Response) => {
       throw new Error("Not authorized, token failed");
     }
   }
+
+  return res.status(400).json({ data: "Invalid token" });
 };
