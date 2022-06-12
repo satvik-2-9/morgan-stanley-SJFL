@@ -155,6 +155,11 @@ export const handleGetAllRequests = async (req: Request, res: Response) => {
         },
       },
     },
+    orderBy: [
+      {
+        updatedAt: "desc",
+      },
+    ],
   });
 
   return res.json({ data: requests });
@@ -256,4 +261,45 @@ export const fetchDocumentByRequestID = async (
 
   // Return documents
   return res.json({ data: document });
+};
+
+export const handleGetRequestStatusCount = async (
+  req: Request,
+  res: Response
+) => {
+  const uid = req.query.uid;
+  const adminUid = req.query.adminUid;
+
+  const requests = await prisma.request.findMany({
+    where: {
+      user: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        uid: {
+          equals: uid,
+        },
+      },
+      admin: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        uid: {
+          equals: adminUid,
+        },
+      },
+    },
+  });
+
+  const count = {
+    APPROVAL_PENDING: 0,
+    PENDING_UPLOADS: 0,
+    UNDER_REVIEW: 0,
+    COMPLETE: 0,
+    REJECTED: 0,
+  };
+
+  for (const request of requests) {
+    count[request.status]++;
+  }
+
+  return res.json({ data: count });
 };

@@ -7,9 +7,12 @@ import {
   handleGetRequestById,
   handleUpdateRequestById,
   fetchDocumentByRequestID,
+  handleGetRequestStatusCount,
 } from "./controller";
 
 export const router = Router();
+
+router.get("/statuscount", ce(handleGetRequestStatusCount));
 
 //CRUD routes
 router.get("/", ce(handleGetAllRequests));
