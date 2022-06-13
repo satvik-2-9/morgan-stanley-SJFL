@@ -57,8 +57,8 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
     });
 
     // logic to get the adminId,adminEmail that this particular request is being assigned to.
-    console.log(process.env.NODEMAILER_EMAIL);
-    console.log(process.env.NODEMAILER_PASSWORD);
+    // console.log(process.env.NODEMAILER_EMAIL);
+    // console.log(process.env.NODEMAILER_PASSWORD);
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -76,7 +76,13 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       from: constants.officialEmail,
       to: adminAssigned?.email,
       subject: "New Request Raised",
-      text: `Hi ${adminAssigned?.name},\nA new request has been raised.\n Please login and review the request.\n`,
+      text: `Hi ${adminAssigned?.name},\nA new request has been raised that requires your attention by: \nUser ID: ${userToBeConnected.uid}\nName:${userToBeConnected.name}\nPlease login and review the request.\n\nRegards,\nTeam HEAL.`,
+    };
+    const mailOptions2 = {
+      from: constants.officialEmail,
+      to: userToBeConnected.email,
+      ubject: "New Request Raised",
+      text: `Hi ${adminAssigned?.name},\nThis is confirmation that a new request has been raised by you with the following ID:${request.id}\nPlease wait while we process your request.\nRegards,\nTeam HEAL.`,
     };
     transporter.sendMail(mailOptions).then(
       () => {
@@ -86,6 +92,7 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
         console.log(err);
       }
     );
+
     return res.json({ data: request });
   }
   return res.status(500).json({ data: error.details[0].message });
@@ -240,6 +247,35 @@ export const handleUpdateRequestById = async (
     },
     data: updateObject,
   });
+
+  if (allowedUpdateFields.includes("status")) {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
+    });
+    const user = await prisma.user.findUnique({
+      where: { id: requestToBeUpdated.userId },
+    });
+    const mailOptions = {
+      from: constants.officialEmail,
+      to: user?.email,
+      subject: "New Request Raised",
+      text: `Hi ${user?.name},\nYour request with requestID:${requestToBeUpdated.id} has been changed to Status:${requestToBeUpdated.status} \nPlease login and view the request.\n\nRegards,\nTeam HEAL.`,
+    };
+    transporter.sendMail(mailOptions).then(
+      () => {
+        console.log("email sent");
+      },
+      (err) => {
+        console.log(err);
+      }
+    );
+  }
 
   return res.json({ data: request });
 };
