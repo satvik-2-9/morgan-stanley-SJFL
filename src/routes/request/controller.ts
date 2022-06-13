@@ -107,16 +107,26 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
       from: constants.officialEmail,
       to: userToBeConnected.email,
       ubject: "New Request Raised",
-      text: `Hi ${adminAssigned?.name},\nThis is confirmation that a new request has been raised by you with the following ID:${createdRequest.id}\nPlease wait while we process your request.\nRegards,\nTeam HEAL.`,
+      text: `Hi ${userToBeConnected?.name},\nThis is confirmation that a new request has been raised by you with the following ID:${createdRequest.id}\nPlease wait while we process your request.\nRegards,\nTeam HEAL.`,
     };
     transporter.sendMail(mailOptions).then(
       () => {
-        console.log("email sent");
+        console.log("email1 sent");
       },
       (err) => {
         console.log(err);
       }
     );
+
+    transporter.sendMail(mailOptions2).then(
+      () => {
+        console.log("email2 sent");
+      },
+      (err) => {
+        console.log(err);
+      }
+    );
+
     return res.json({ data: createdRequest });
   }
   return res.status(500).json({ data: error.details[0].message });
@@ -288,8 +298,8 @@ export const handleUpdateRequestById = async (
     const mailOptions = {
       from: constants.officialEmail,
       to: user?.email,
-      subject: "New Request Raised",
-      text: `Hi ${user?.name},\nYour request with requestID:${requestToBeUpdated.id} has been changed to Status:${requestToBeUpdated.status} \nPlease login and view the request.\n\nRegards,\nTeam HEAL.`,
+      subject: "Request Status Updated",
+      text: `Hi ${user?.name},\nYour request with requestID:${requestToBeUpdated.id} has been changed to Status:${req.body["status"]} \nPlease login and view the request.\n\nRegards,\nTeam HEAL.`,
     };
     transporter.sendMail(mailOptions).then(
       () => {
