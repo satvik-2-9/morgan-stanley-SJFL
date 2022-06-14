@@ -106,7 +106,7 @@ export const handleCreateRequest = async (req: Request, res: Response) => {
     const mailOptions2 = {
       from: constants.officialEmail,
       to: userToBeConnected.email,
-      ubject: "New Request Raised",
+      subject: "New Request Raised",
       text: `Hi ${userToBeConnected?.name},\nThis is confirmation that a new request has been raised by you with the following ID:${createdRequest.id}\nPlease wait while we process your request.\nRegards,\nTeam HEAL.`,
     };
     transporter.sendMail(mailOptions).then(
